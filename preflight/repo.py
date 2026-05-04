@@ -181,7 +181,18 @@ def classify_path(path_str: str, repo: Optional[RepoContext], cwd) -> str:
     if repo is None:
         return PATH_UNKNOWN
 
-    resolved = _normalize(path_str, cwd)
+    # Resolve cwd the same way RepoContext.detect did, so the string-based
+    # _is_under comparison agrees on the canonical form. Without this, on
+    # Windows (short vs long temp paths) and macOS (`/var` vs `/private/var`
+    # symlink) a relative path joined with an unresolved cwd doesn't match
+    # the repo.root that detect() produced, and classification silently
+    # returns PATH_OUT_OF_REPO for paths that are actually inside the repo.
+    try:
+        cwd_resolved = str(Path(cwd).resolve())
+    except (OSError, ValueError):
+        cwd_resolved = str(cwd)
+
+    resolved = _normalize(path_str, cwd_resolved)
     if not _is_under(resolved, str(repo.root)):
         return PATH_OUT_OF_REPO
 

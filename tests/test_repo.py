@@ -367,3 +367,49 @@ def test_shell_repo_meta_command(tmp_path):
     joined = "\n".join(output)
     assert "git" in joined
     assert str(tmp_path.resolve()) in joined
+
+# ---------- regression: path normalization across OSes ----------
+
+
+def test_classify_path_resolves_cwd_for_string_comparison(tmp_path):
+    """Regression for the CI failure on Windows + macOS where classify_path
+    treated an in-repo file as PATH_OUT_OF_REPO because the unresolved cwd
+    (e.g., `/var/folders/...` on macOS, short-form temp path on Windows)
+    didn't string-equal the resolved repo.root produced by RepoContext.detect.
+
+    The fix: classify_path must resolve cwd the same way detect() does
+    before constructing the joined path it compares against repo.root.
+    """
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "package-lock.json").write_text("{}")
+
+    repo = RepoContext.detect(str(tmp_path))
+    assert repo is not None
+
+    # On macOS, tmp_path may live under /var/folders which is a symlink
+    # to /private/var/folders. RepoContext.detect resolves it; classify_path
+    # must do the same so the in-repo classification fires.
+    cls = classify_path("package-lock.json", repo, str(tmp_path))
+    assert cls == PATH_IN_REPO_LOCKFILE, (
+        f"package-lock.json should be classified as PATH_IN_REPO_LOCKFILE "
+        f"when cwd is the repo root, got {cls}. This usually means the "
+        f"unresolved-cwd vs resolved-repo.root mismatch has regressed."
+    )
+
+
+def test_classify_path_works_when_cwd_has_symlink_alias(tmp_path):
+    """If cwd is given via an unresolved alias (the macOS /var → /private/var
+    case), classification should still recognize files as in-repo."""
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "Cargo.lock").write_text("")
+
+    repo = RepoContext.detect(str(tmp_path))
+    assert repo is not None
+
+    # Even when cwd is the unresolved form (which TemporaryDirectory may
+    # return on macOS), classification must still identify the file as
+    # in-repo. We can't easily fabricate a symlink alias in a portable
+    # test, so just verify classification works with the cwd Python's
+    # tempfile gave us — which is exactly the form that fails on macOS CI.
+    cls = classify_path("Cargo.lock", repo, str(tmp_path))
+    assert cls == PATH_IN_REPO_LOCKFILE
