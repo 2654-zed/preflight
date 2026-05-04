@@ -1,5 +1,9 @@
 # Preflight
 
+[![tests](https://github.com/2654-zed/preflight/actions/workflows/test.yml/badge.svg)](https://github.com/2654-zed/preflight/actions/workflows/test.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
+
 Capability-aware risk scoring for AI coding agent tool calls.
 
 Preflight intercepts a proposed shell command (or any tool call rendered as a command), decomposes its risk across five dimensions — Position, Permissions, Trust Bindings, Mutability, Observation — and returns a stored-potential score and a decision: `ALLOW`, `ALLOW_AND_LOG`, `WARN`, `CONFIRM_REQUIRED`, or `HARD_STOP`.
