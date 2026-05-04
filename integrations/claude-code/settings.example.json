@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|Grep|Glob|WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "preflight hook"
+          }
+        ]
+      }
+    ]
+  }
+}

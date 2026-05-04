@@ -1,0 +1,36 @@
+{
+  "name": "preflight",
+  "version": "1.0.0",
+  "description": "Capability-aware risk scoring for Claude Code tool calls. Intercepts every Bash / Read / Write / Edit / Grep / WebFetch and decomposes the action across Position, Permissions, Trust Bindings, Mutability, and Observation. Tracks accumulated session capability so a benign-looking command becomes CRITICAL once the session has already touched a secret.",
+  "author": {
+    "name": "Preflight"
+  },
+  "homepage": "https://github.com/your-org/preflight",
+  "license": "MIT",
+  "keywords": [
+    "security",
+    "risk-scoring",
+    "prompt-injection",
+    "tool-call-firewall",
+    "agent-safety"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|Grep|Glob|WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "preflight hook"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "preflight": {
+      "command": "preflight",
+      "args": ["mcp"]
+    }
+  }
+}
